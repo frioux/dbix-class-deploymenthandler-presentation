@@ -71,37 +71,144 @@
    <div class="slide">
       <h1>DBIX::Class::DeploymentHandler (aka DBICDH)</h1>
       <h3>for (advanced) beginners</h3>
-   </div>
-
-   <div class="slide">
-      <h1>Author:</h1>
-      <h4>Arthur Axel "fREW" Schmidt</h4>
+      <h4>Arthur Axel "fRIOUX" Schmidt</h4>
    </div>
 
    <div class="slide">
       <h1>What is DBICDH?</h1>
-      <p>DBIx::Class::DeploymentHandler is a tool to aid in the (surprise!)
-      deployment of a DBIx::Class::Schema.</p>
+      <p>DBIx::Class::DeploymentHandler - tool to aid in DBIx::Class::Schema
+      deployment over multiple versions.</p>
+      <div class="notes">
+         <ul>
+            <li>w/o multiple versions -&gt;deploy is certainly easier</li>
+         </ul>
+      </div>
    </div>
 
    <div class="slide">
       <h1>Why not just use DBIx::Class::Schema::Versioned?</h1>
+      <ul class="incremental">
+         <li>Not a component on Schema &there4; ::Journal</li>
+         <li>Much more extensible</li>
+         <li>A clean break from backcompat</li>
+      </ul>
    </div>
 
    <div class="slide">
-      <h1>Introduction of the defaults</h1>
+   <h1>YUCK.</h1>
+<pre style="font-size:35%;">sub _set_db_version {
+  my $self = shift;
+  my ($params) = @_;
+  $params ||= {};
+
+  my $version = $params->{version} ? $params->{version} : $self->schema_version;
+  my $vtable = $self->{vschema}->resultset('Table');
+
+  ##############################################################################
+  #                             !!! NOTE !!!
+  ##############################################################################
+  #
+  # The travesty below replaces the old nice timestamp format of %Y-%m-%d %H:%M:%S
+  # This is necessary since there are legitimate cases when upgrades can happen
+  # back to back within the same second. This breaks things since we relay on the
+  # ability to sort by the 'installed' value. The logical choice of an autoinc
+  # is not possible, as it will break multiple legacy installations. Also it is
+  # not possible to format the string sanely, as the column is a varchar(20).
+  # The 'v' character is added to the front of the string, so that any version
+  # formatted by this new function will sort _after_ any existing 200... strings.
+  my @tm = gettimeofday();
+  my @dt = gmtime ($tm[0]);
+  my $o = $vtable-&gt;create({
+    version =&gt; $version,
+    installed =&gt; sprintf("v%04d%02d%02d_%02d%02d%02d.%03.0f",
+      $dt[5] + 1900,
+      $dt[4] + 1,
+      $dt[3],
+      $dt[2],
+      $dt[1],
+      $dt[0],
+      $tm[1] / 1000, # convert to millisecs, format as up/down rounded int above
+    ),
+  });
+}</pre>
    </div>
 
    <div class="slide">
-      <h1>Monotonic</h1>
+      <h1>Introduction to the defaults</h1>
+      <p>There are already a lot of different options for building your own
+      DBICDH, we'll talk about the defaults (aka recommended) here.</p>
    </div>
 
    <div class="slide">
-      <h1>SQL::Translator</h1>
+      <h1>Monotonic Version Handler</h1>
+      <p>The monotonic version handler uses integer only versions, which follow
+      naturally per revision or release or whatever.  So you first version
+      would be 1, the second would be 2, etc.</p>
+      <p>The main benefit of monotonic is that it is perfectly simple and
+      predictable.  No issues of how versions are parsed or ordered or any of
+      that.</p>
    </div>
 
    <div class="slide">
-      <h1>Standard</h1>
+      <h1>SQL::Translator Deploy Method</h1>
+      <p>The SQLT deploy method uses SQLT to generate SQL for installs,
+      upgrades, and downgrades.  In addition to that it does the actual
+      running of SQL and Perl scripts and defines the directory layout for
+      the scripts.</p>
+   </div>
+
+   <div class="slide">
+      <h1>SQLTDM - Perl Scripts</h1>
+      <p>A Perl script used by SQLTDM is actually very similar to a .psgi
+      script.  It should just be an anonymous subref.  Scripts for install,
+      upgrade, and downgrade get the schema as their first argument.  The
+      preinstall scripts are not passed any arguments.</p>
+   </div>
+
+   <div class="slide">
+      <h1>SQLTDM - Directory Layout</h1>
+      <p>Note: this is heavily based upon DBIx::Migration::Directories</p>
+<pre style="font-size:45%;">$sql_migration_dir
+ |- SQLite
+ |  |- down
+ |  |  `- 2-1
+ |  |     `- 001-auto.sql
+ |  |- schema
+ |  |  `- 1
+ |  |     `- 001-auto.sql
+ |  `- up
+ |     |- 1-2
+ |     |  `- 001-auto.sql
+ |     `- 2-3
+ |        `- 001-auto.sql
+ |- _common
+ |  |- down
+ |  |  `- 2-1
+ |  |     `- 002-remove-customers.pl
+ |  `- up
+ |     `- 1-2
+ |        `- 002-generate-customers.pl
+ `- MySQL
+    |- down
+    |  `- 2-1
+    |     `- 001-auto.sql
+    |- preinstall
+    |  `- 1
+    |     |- 001-create_database.pl
+    |     `- 002-create_users_and_permissions.pl
+    |- schema
+    |  `- 1
+    |     `- 001-auto.sql
+    `- up
+       `- 1-2
+          `- 001-auto.sql</pre>
+   </div>
+
+   <div class="slide">
+      <h1>Standard Version Storage</h1>
+      <p>Not a whole lot worth saying here.  The main change from ::Versioned
+      is that instead of that crazy date thing I pointed out above it uses a
+      simple autoincrementing id.</p>
    </div>
 
    <div class="slide">
@@ -110,18 +217,72 @@
 
    <div class="slide">
       <h1>preinstall</h1>
+      <p>The preinstall stage, while not required, should vastly
+      reduce the amount of manual intervention required for a deploy.  Typical
+      usage will probably be something like having it do CREATE DATABASE FOO
+      as well as adding a few users to the database and whatnot.</p>
+      <p>Because preinstall is such an open-ended stage, it currently only
+      supports running perl scripts, instead of perl and sql like the rest of
+      the stages.</p>
+   </div>
+
+   <div class="slide">
+      <h1>preinstall example</h1>
+<pre># $migrations/MySQL/preinstall/1/001_create_database.pl
+use DBI;
+sub {
+   my $user = 'root';
+   my $password = 'foo';
+   my $dsn = 'bar';
+   my $dbh = DBI-&gt;connect($dsn, $user, $password);
+   $dbh-&gt;do('CREATE DATABASE frewmbot') or die 'Shucks howdy!  FAIL:' . $@;
+};
+</pre>
    </div>
 
    <div class="slide">
       <h1>install</h1>
+      <p>The install stage is where the schema gets deployed, as well as your
+      version storage.  In general this will be mostly automatic, unless you
+      want to do something like prepopulate a users table.</p>
+   </div>
+
+   <div class="slide">
+      <h1>install example</h1>
+<pre># $migrations/_common/install/1/001_create_users.pl
+sub {
+   my $schema = shift;
+   my @useless = $schema-&gt;resultset('User')-&gt;populate([
+      {username =&gt; 'frew', password =&gt; 'test' },
+   ]);
+};
+</pre>
    </div>
 
    <div class="slide">
       <h1>upgrade</h1>
+      <p>This stage is where your schema gets modified.  If you are doing
+      simple changes like adding/removing tables/columns it should be
+      entirely automatic.  If you are renaming things or transforming data
+      you'll need to add some scripts yourself.</p>
+   </div>
+
+   <div class="slide">
+      <h1>upgrade example</h1>
+<pre># $migrations/_common/upgrade/1-2/001_hash_passwords.pl
+sub {
+   my $schema = shift;
+   $_-&gt;update({ password =&gt; $_-&gt;get_column('password') })
+      for $schema-&gt;resultset('User')-&gt;all;
+};
+</pre>
    </div>
 
    <div class="slide">
       <h1>Quick rant about implementation</h1>
+      <p>Parameterized Roles &#8867; MI like Delegation</p>
+      <p>Should probably use something more proven at some point, but right now
+      my half baked solution works great.</p>
    </div>
 
    <div class="slide">
@@ -130,14 +291,29 @@
 
    <div class="slide">
       <h1>VersionHandler</h1>
+      <p>Git style non-linear upgrades</p>
    </div>
 
    <div class="slide">
       <h1>VersionStorage</h1>
+      <p>Changing table name</p>
    </div>
 
    <div class="slide">
       <h1>DeployMethod</h1>
+      <p>?</p>
+
+   <div class="slide">
+      <h1>Questions?</h1>
+      <ul class="incremental">
+         <li>Is fREW single?</li>
+         <li>How many licks does it take to get to the center of a lolly pop?</li>
+         <li>When will Perl 6 be released?</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>THE END</h1>
    </div>
 
 </div>
