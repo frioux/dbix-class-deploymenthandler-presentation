@@ -70,7 +70,6 @@
 
    <div class="slide">
       <h1>DBIX::Class::DeploymentHandler (aka DBICDH)</h1>
-      <h3>for (advanced) beginners</h3>
       <h4>Arthur Axel "fRIOUX" Schmidt</h4>
    </div>
 
@@ -101,8 +100,8 @@
   my ($params) = @_;
   $params ||= {};
 
-  my $version = $params->{version} ? $params->{version} : $self->schema_version;
-  my $vtable = $self->{vschema}->resultset('Table');
+  my $version = $params-&gt;{version} ? $params-&gt;{version} : $self-&gt;schema_version;
+  my $vtable = $self-&gt;{vschema}-&gt;resultset('Table');
 
   ##############################################################################
   #                             !!! NOTE !!!
@@ -135,6 +134,10 @@
 
    <div class="slide">
       <h1>Introduction to the defaults</h1>
+      <ul class="incremental">
+         <li>lots of options</li>
+         <li>defaults/recommended</li>
+      </ul>
       <div class="notes">
          <p>There are already a lot of different options for building your own
          DBICDH, we'll talk about the defaults (aka recommended) here.</p>
@@ -143,6 +146,10 @@
 
    <div class="slide">
       <h1>Monotonic Version Handler</h1>
+      <ul class="incremental">
+         <li>integers only</li>
+         <li>easily move from one version to the next</li>
+      </ul>
       <div class="notes">
          <p>The monotonic version handler uses integer only versions, which
          follow naturally per revision or release or whatever.  So you first
@@ -155,6 +162,10 @@
 
    <div class="slide">
       <h1>SQL::Translator Deploy Method</h1>
+      <ul class="incremental">
+         <li>SQLT for SQL generation</li>
+         <li>Runs upgrade scripts</li>
+      </ul>
       <div class="notes">
          <p>The SQLT deploy method uses SQLT to generate SQL for installs,
          upgrades, and downgrades.  In addition to that it does the actual
@@ -165,6 +176,10 @@
 
    <div class="slide">
       <h1>SQLTDM - Perl Scripts</h1>
+      <ul class="incremental">
+         <li>similar to .psgi - anonymous coderef</li>
+         <li>First arg is the schema (except for preinstall)</li>
+      </ul>
       <div class="notes">
          <p>A Perl script used by SQLTDM is actually very similar to a .psgi
          script.  It should just be an anonymous subref.  Scripts for install,
@@ -174,21 +189,29 @@
    </div>
 
    <div class="slide">
+      <h1>SQLTDM - Serialized SQL</h1>
+      <ul class="incremental">
+         <li>JSON serialized array of SQL statements</li>
+         <li>Blame SQLT</li>
+      </ul>
+   </div>
+
+   <div class="slide">
       <h1>SQLTDM - Directory Layout</h1>
       <p>Note: this is heavily based upon DBIx::Migration::Directories</p>
 <pre style="font-size:45%;">$sql_migration_dir
  |- SQLite
  |  |- down
  |  |  `- 2-1
- |  |     `- 001-auto.sql
+ |  |     `- 001-auto.sql-json
  |  |- schema
  |  |  `- 1
- |  |     `- 001-auto.sql
+ |  |     `- 001-auto.sql-json
  |  `- up
  |     |- 1-2
- |     |  `- 001-auto.sql
+ |     |  `- 001-auto.sql-json
  |     `- 2-3
- |        `- 001-auto.sql
+ |        `- 001-auto.sql-json
  |- _common
  |  |- down
  |  |  `- 2-1
@@ -199,21 +222,24 @@
  `- MySQL
     |- down
     |  `- 2-1
-    |     `- 001-auto.sql
+    |     `- 001-auto.sql-json
     |- preinstall
     |  `- 1
     |     |- 001-create_database.pl
     |     `- 002-create_users_and_permissions.pl
     |- schema
     |  `- 1
-    |     `- 001-auto.sql
+    |     `- 001-auto.sql-json
     `- up
        `- 1-2
-          `- 001-auto.sql</pre>
+          `- 001-auto.sql-json</pre>
    </div>
 
    <div class="slide">
       <h1>Standard Version Storage</h1>
+      <ul class="incremental">
+         <li>autoinc instead of monster date</li>
+      </ul>
       <div class="notes">
          <p>Not a whole lot worth saying here.  The main change from
          ::Versioned is that instead of that crazy date thing I pointed out
@@ -227,6 +253,11 @@
 
    <div class="slide">
       <h1>preinstall</h1>
+      <ul class="incremental">
+         <li>Optional, but recommended by the frewmbot</li>
+         <li>CREATE DATABASE</li>
+         <li>only Perl</li>
+      </ul>
       <div class="notes">
          <p>The preinstall stage, while not required, should vastly reduce the
          amount of manual intervention required for a deploy.  Typical usage
@@ -243,10 +274,10 @@
 <pre># $migrations/MySQL/preinstall/1/001_create_database.pl
 sub {
    use DBI;
-   my $user     = 'root';
-   my $password = 'foo';
-   my $dsn      = 'bar';
-   my $dbh = DBI-&gt;connect($dsn, $user, $password);
+   my $user     = 'root'; # you should probably
+   my $password = 'foo';  # prompt the user for
+   my $dsn      = 'bar';  # at least the password
+   my $dbh      = DBI-&gt;connect($dsn, $user, $password);
    $dbh-&gt;do('CREATE DATABASE frewmbot') or die 'Shucks howdy!  FAIL:' . $@;
 };
 </pre>
@@ -254,6 +285,12 @@ sub {
 
    <div class="slide">
       <h1>install</h1>
+      <ul class="incremental">
+         <li>run prepare_install first</li>
+         <li>schema deploy</li>
+         <li>version storage install</li>
+         <li>Other basic population</li>
+      </ul>
       <div class="notes">
          <p>The install stage is where the schema gets deployed, as well as
          your version storage.  In general this will be mostly automatic,
@@ -275,6 +312,13 @@ sub {
 
    <div class="slide">
       <h1>upgrade</h1>
+      <ul class="incremental">
+         <li>run prepare_install + prepare_upgrade first</li>
+         <li>schema modifications</li>
+         <li>vanilla additions/deletions should be automatic</li>
+         <li>column renames need user scripting</li>
+         <li>also: downgrade</li>
+      </ul>
       <div class="notes">
          <p>This stage is where your schema gets modified.  If you are doing
          simple changes like adding/removing tables/columns it should be
@@ -297,8 +341,8 @@ sub {
    <div class="slide">
       <h1>Quick rant about implementation</h1>
       <p>Parameterized Roles &#8867; MI like Delegation</p>
-      <p>Should probably use something more proven at some point, but right now
-      my half baked solution works great.</p>
+      <p>Should probably use something more proven at some point, but right
+      now my half baked solution works great.</p>
    </div>
 
    <div class="slide">
