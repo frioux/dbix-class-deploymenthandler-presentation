@@ -164,7 +164,7 @@
       <h1>SQL::Translator Deploy Method</h1>
       <ul class="incremental">
          <li>SQLT for SQL generation</li>
-         <li>Runs upgrade scripts</li>
+         <li>Runs scripts</li>
       </ul>
       <div class="notes">
          <p>The SQLT deploy method uses SQLT to generate SQL for installs,
@@ -199,7 +199,7 @@
    <div class="slide">
       <h1>SQLTDM - Directory Layout</h1>
       <p>Note: this is heavily based upon DBIx::Migration::Directories</p>
-<pre style="font-size:45%;">$sql_migration_dir
+<pre style="font-size:35%;">$sql_migration_dir
  |- SQLite
  |  |- down
  |  |  `- 2-1
@@ -237,7 +237,7 @@
 
    <div class="slide">
       <h1>Standard Version Storage</h1>
-      <ul class="incremental">
+      <ul>
          <li>autoinc instead of monster date</li>
       </ul>
       <div class="notes">
@@ -249,6 +249,10 @@
 
    <div class="slide">
       <h1>General Usage</h1>
+      <ul class="incremental">
+         <li>The stages of DBICDH</li>
+         <li>How to use them</li>
+      </ul>
    </div>
 
    <div class="slide">
@@ -339,6 +343,14 @@ sub {
    </div>
 
    <div class="slide">
+      <h1>PRO TIPS</h1>
+      <ul class="incremental">
+         <li>Deadlocks!</li>
+         <li>Use monotonic and only ever install first version</li>
+      </ul>
+   </div>
+
+   <div class="slide">
       <h1>Quick rant about implementation</h1>
       <p>Parameterized Roles &#8867; MI like Delegation</p>
       <p>Should probably use something more proven at some point, but right
@@ -361,15 +373,10 @@ sub {
 
    <div class="slide">
       <h1>DeployMethod</h1>
-      <p>?</p>
+      <p>No intermediate SQL</p>
 
    <div class="slide">
       <h1>Questions?</h1>
-      <ul class="incremental">
-         <li>Is fREW single?</li>
-         <li>How many licks does it take to get to the center of a lolly pop?</li>
-         <li>When will Perl 6 be released?</li>
-      </ul>
    </div>
 
    <div class="slide">
