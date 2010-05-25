@@ -76,8 +76,8 @@
 
    <div class="slide">
       <h1>What is DBICDH?</h1>
-      <p>DBIx::Class::DeploymentHandler - tool to aid in DBIx::Class::Schema
-      deployment over multiple versions.</p>
+      <p>DBIx::Class::DeploymentHandler - DBIx::Class::Schema
+      deployment for multiple versions.</p>
       <div class="notes">
          <ul>
             <li>w/o multiple versions -&gt;deploy is certainly easier</li>
@@ -88,7 +88,7 @@
    <div class="slide">
       <h1>Why not just use DBIx::Class::Schema::Versioned?</h1>
       <ul class="incremental">
-         <li>Not a component on Schema &there4; ::Journal</li>
+         <li>Not a component on Schema &there4; DBIx::Class::Journal</li>
          <li>Much more extensible</li>
          <li>A clean break from backcompat</li>
       </ul>
@@ -135,34 +135,42 @@
 
    <div class="slide">
       <h1>Introduction to the defaults</h1>
-      <p>There are already a lot of different options for building your own
-      DBICDH, we'll talk about the defaults (aka recommended) here.</p>
+      <div class="notes">
+         <p>There are already a lot of different options for building your own
+         DBICDH, we'll talk about the defaults (aka recommended) here.</p>
+      </div>
    </div>
 
    <div class="slide">
       <h1>Monotonic Version Handler</h1>
-      <p>The monotonic version handler uses integer only versions, which follow
-      naturally per revision or release or whatever.  So you first version
-      would be 1, the second would be 2, etc.</p>
-      <p>The main benefit of monotonic is that it is perfectly simple and
-      predictable.  No issues of how versions are parsed or ordered or any of
-      that.</p>
+      <div class="notes">
+         <p>The monotonic version handler uses integer only versions, which
+         follow naturally per revision or release or whatever.  So you first
+         version would be 1, the second would be 2, etc.</p>
+         <p>The main benefit of monotonic is that it is perfectly simple
+         and predictable.  No issues of how versions are parsed or ordered
+         or any of that.</p>
+      </div>
    </div>
 
    <div class="slide">
       <h1>SQL::Translator Deploy Method</h1>
-      <p>The SQLT deploy method uses SQLT to generate SQL for installs,
-      upgrades, and downgrades.  In addition to that it does the actual
-      running of SQL and Perl scripts and defines the directory layout for
-      the scripts.</p>
+      <div class="notes">
+         <p>The SQLT deploy method uses SQLT to generate SQL for installs,
+         upgrades, and downgrades.  In addition to that it does the actual
+         running of SQL and Perl scripts and defines the directory layout
+         for the scripts.</p>
+      </div>
    </div>
 
    <div class="slide">
       <h1>SQLTDM - Perl Scripts</h1>
-      <p>A Perl script used by SQLTDM is actually very similar to a .psgi
-      script.  It should just be an anonymous subref.  Scripts for install,
-      upgrade, and downgrade get the schema as their first argument.  The
-      preinstall scripts are not passed any arguments.</p>
+      <div class="notes">
+         <p>A Perl script used by SQLTDM is actually very similar to a .psgi
+         script.  It should just be an anonymous subref.  Scripts for install,
+         upgrade, and downgrade get the schema as their first argument.
+         The preinstall scripts are not passed any arguments.</p>
+      </div>
    </div>
 
    <div class="slide">
@@ -206,9 +214,11 @@
 
    <div class="slide">
       <h1>Standard Version Storage</h1>
-      <p>Not a whole lot worth saying here.  The main change from ::Versioned
-      is that instead of that crazy date thing I pointed out above it uses a
-      simple autoincrementing id.</p>
+      <div class="notes">
+         <p>Not a whole lot worth saying here.  The main change from
+         ::Versioned is that instead of that crazy date thing I pointed out
+         above it uses a simple autoincrementing id.</p>
+      </div>
    </div>
 
    <div class="slide">
@@ -217,23 +227,25 @@
 
    <div class="slide">
       <h1>preinstall</h1>
-      <p>The preinstall stage, while not required, should vastly
-      reduce the amount of manual intervention required for a deploy.  Typical
-      usage will probably be something like having it do CREATE DATABASE FOO
-      as well as adding a few users to the database and whatnot.</p>
-      <p>Because preinstall is such an open-ended stage, it currently only
-      supports running perl scripts, instead of perl and sql like the rest of
-      the stages.</p>
+      <div class="notes">
+         <p>The preinstall stage, while not required, should vastly reduce the
+         amount of manual intervention required for a deploy.  Typical usage
+         will probably be something like having it do CREATE DATABASE FOO
+         as well as adding a few users to the database and whatnot.</p>
+         <p>Because preinstall is such an open-ended stage, it currently
+         only supports running perl scripts, instead of perl and sql like
+         the rest of the stages.</p>
+      </div>
    </div>
 
    <div class="slide">
       <h1>preinstall example</h1>
 <pre># $migrations/MySQL/preinstall/1/001_create_database.pl
-use DBI;
 sub {
-   my $user = 'root';
+   use DBI;
+   my $user     = 'root';
    my $password = 'foo';
-   my $dsn = 'bar';
+   my $dsn      = 'bar';
    my $dbh = DBI-&gt;connect($dsn, $user, $password);
    $dbh-&gt;do('CREATE DATABASE frewmbot') or die 'Shucks howdy!  FAIL:' . $@;
 };
@@ -242,9 +254,11 @@ sub {
 
    <div class="slide">
       <h1>install</h1>
-      <p>The install stage is where the schema gets deployed, as well as your
-      version storage.  In general this will be mostly automatic, unless you
-      want to do something like prepopulate a users table.</p>
+      <div class="notes">
+         <p>The install stage is where the schema gets deployed, as well as
+         your version storage.  In general this will be mostly automatic,
+         unless you want to do something like prepopulate a users table.</p>
+      </div>
    </div>
 
    <div class="slide">
@@ -261,10 +275,12 @@ sub {
 
    <div class="slide">
       <h1>upgrade</h1>
-      <p>This stage is where your schema gets modified.  If you are doing
-      simple changes like adding/removing tables/columns it should be
-      entirely automatic.  If you are renaming things or transforming data
-      you'll need to add some scripts yourself.</p>
+      <div class="notes">
+         <p>This stage is where your schema gets modified.  If you are doing
+         simple changes like adding/removing tables/columns it should be
+         entirely automatic.  If you are renaming things or transforming
+         data you'll need to add some scripts yourself.</p>
+      </div>
    </div>
 
    <div class="slide">
