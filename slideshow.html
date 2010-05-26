@@ -346,7 +346,7 @@ sub {
       <h1>PRO TIPS</h1>
       <ul class="incremental">
          <li>Deadlocks!</li>
-         <li>Use monotonic and only ever install first version</li>
+         <li>Use monotonic, install first version, upgrade from there</li>
       </ul>
    </div>
 
@@ -362,13 +362,116 @@ sub {
    </div>
 
    <div class="slide">
-      <h1>VersionHandler</h1>
-      <p>Git style non-linear upgrades</p>
+      <h1>VersionStorage: Changing table name</h1>
+      <ul class="incremental">
+         <li>DBICDH Storage</li>
+         <li>DBIC Result</li>
+         <li>Custom DBICDH</li>
    </div>
 
    <div class="slide">
-      <h1>VersionStorage</h1>
-      <p>Changing table name</p>
+      <h1>DBICDH Storage</h1>
+<pre>
+package MyApp::Schema::DBICDHStorage;
+use Moose;
+extends 'DBIx::Class::DeploymentHandler::VersionStorage::Standard';
+
+sub _build_version_rs {
+  $_[0]-&gt;schema-&gt;register_class(
+    __VERSION =&gt;
+      'MyApp::Schema::DBICDHStorageResult'
+  );
+  $_[0]-&gt;schema-&gt;resultset('__VERSION')
+}
+
+no Moose;
+__PACKAGE__-&gt;meta-&gt;make_immutable;
+1;
+</pre>
+   </div>
+
+   <div class="slide">
+      <h1>DBICDH Storage, pt 2</h1>
+      <ul>
+         <li>Note register class and __VERSION</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>DBIC Result</h1>
+<pre>
+package MyApp::Schema::DBICDHStorageResult;
+use parent 'DBIx::Class::DeploymentHandler::VersionStorage::Standard::VersionResult';
+__PACKAGE__-&gt;table('fl_bench_journal_versions');
+1;
+</pre>
+   </div>
+
+   <div class="slide">
+      <h1>DBIC Result, pt 2</h1>
+      <ul>
+         <li>Merely change the table name and we should be golden</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Custom DBICDH</h1>
+<pre>
+package MyApp::Schema::DeploymentHandler;
+use Moose;
+extends 'DBIx::Class::DeploymentHandler::Dad';
+
+with 'DBIx::Class::DeploymentHandler::WithApplicatorDumple' =&gt; {
+    interface_role       =&gt; 'DBIx::Class::DeploymentHandler::HandlesDeploy',
+    class_name           =&gt; 'DBIx::Class::DeploymentHandler::DeployMethod::SQL::Translator',
+    delegate_name        =&gt; 'deploy_method',
+    attributes_to_assume =&gt; ['schema'],
+    attributes_to_copy   =&gt; [qw( databases script_directory sql_translator_args )],
+  },
+  'DBIx::Class::DeploymentHandler::WithApplicatorDumple' =&gt; {
+    interface_role       =&gt; 'DBIx::Class::DeploymentHandler::HandlesVersioning',
+    class_name           =&gt; 'DBIx::Class::DeploymentHandler::VersionHandler::Monotonic',
+    delegate_name        =&gt; 'version_handler',
+    attributes_to_assume =&gt; [qw( database_version schema_version to_version )],
+  },
+  'DBIx::Class::DeploymentHandler::WithApplicatorDumple' =&gt; {
+    interface_role       =&gt; 'DBIx::Class::DeploymentHandler::HandlesVersionStorage',
+    class_name           =&gt; 'MyApp::Schema::DBICDHStorage',
+    delegate_name        =&gt; 'version_storage',
+    attributes_to_assume =&gt; ['schema'],
+  };
+with 'DBIx::Class::DeploymentHandler::WithReasonableDefaults';
+
+sub prepare_version_storage_install {
+  my $self = shift;
+
+  $self-&gt;prepare_resultsource_install(
+    $self-&gt;version_storage-&gt;version_rs-&gt;result_source
+  );
+}
+
+sub install_version_storage {
+  my $self = shift;
+
+  $self-&gt;install_resultsource(
+    $self-&gt;version_storage-&gt;version_rs-&gt;result_source
+  );
+}
+
+sub prepare_install {
+   $_[0]-&gt;prepare_deploy;
+   $_[0]-&gt;prepare_version_storage_install;
+}
+
+no Moose;
+__PACKAGE__-&gt;meta-&gt;make_immutable;
+1;
+</pre>
+</div>
+
+   <div class="slide">
+      <h1>VersionHandler</h1>
+      <p>Git style non-linear upgrades</p>
    </div>
 
    <div class="slide">
