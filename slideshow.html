@@ -178,7 +178,7 @@
       <h1>SQLTDM - Perl Scripts</h1>
       <ul class="incremental">
          <li>similar to .psgi - anonymous coderef</li>
-         <li>First arg is the schema (except for preinstall)</li>
+         <li>First arg is the schema (except for preinstall and _protoschema)</li>
       </ul>
       <div class="notes">
          <p>A Perl script used by SQLTDM is actually very similar to a .psgi
@@ -189,10 +189,9 @@
    </div>
 
    <div class="slide">
-      <h1>SQLTDM - Serialized SQL</h1>
+      <h1>SQLTDM - Serialized Schemata</h1>
       <ul class="incremental">
-         <li>JSON serialized array of SQL statements</li>
-         <li>Blame SQLT</li>
+         <li>Serialized SQLT objects to represent the schema for any database</li>
       </ul>
    </div>
 
@@ -200,39 +199,36 @@
       <h1>SQLTDM - Directory Layout</h1>
       <p>Note: this is heavily based upon DBIx::Migration::Directories</p>
 <pre style="font-size:35%;">$sql_migration_dir
+ |- _protoschema
+ |  |- schema
+ |  |  `- 1
+ |  |     `- 001-auto.yml
+ |  `- up
+ |     `- 1-2
+ |        `- rename_columns.pl
  |- SQLite
  |  |- down
  |  |  `- 2-1
- |  |     `- 001-auto.sql-json
+ |  |     `- 001-auto.sql
+ |  |- preinstall
+ |  |  `- 1
+ |  |     |- 001-create_database.pl
+ |  |     `- 002-create_users_and_permissions.pl
  |  |- schema
  |  |  `- 1
- |  |     `- 001-auto.sql-json
+ |  |     `- 001-auto.sql
  |  `- up
  |     |- 1-2
- |     |  `- 001-auto.sql-json
+ |     |  `- 001-auto.sql
  |     `- 2-3
- |        `- 001-auto.sql-json
+ |        `- 001-auto.sql
  |- _common
- |  |- down
- |  |  `- 2-1
- |  |     `- 002-remove-customers.pl
- |  `- up
- |     `- 1-2
- |        `- 002-generate-customers.pl
- `- MySQL
     |- down
     |  `- 2-1
-    |     `- 001-auto.sql-json
-    |- preinstall
-    |  `- 1
-    |     |- 001-create_database.pl
-    |     `- 002-create_users_and_permissions.pl
-    |- schema
-    |  `- 1
-    |     `- 001-auto.sql-json
+    |     `- 002-remove-customers.pl
     `- up
        `- 1-2
-          `- 001-auto.sql-json</pre>
+          `- 002-generate-customers.pl
    </div>
 
    <div class="slide">
@@ -340,6 +336,14 @@ sub {
       for $schema-&gt;resultset('User')-&gt;all;
 };
 </pre>
+   </div>
+
+   <div class="slide">
+      <h1>The fabled _protoschema</h1>
+      <ul class="incremental">
+         <li>Look ma!  No SQL!</li>
+         <li>No obnoxious renamed_from's in you DBIC::Schema</li>
+      </ul>
    </div>
 
    <div class="slide">
