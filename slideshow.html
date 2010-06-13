@@ -69,7 +69,7 @@
 <div class="presentation">
 
    <div class="slide">
-      <h1>DBIX::Class::DeploymentHandler (aka DBICDH)</h1>
+      <h1>DBIX::Class:: DeploymentHandler (aka DBICDH)</h1>
       <h4>Arthur Axel "fRIOUX" Schmidt</h4>
    </div>
 
@@ -85,7 +85,7 @@
    </div>
 
    <div class="slide">
-      <h1>Why not just use DBIx::Class::Schema::Versioned?</h1>
+      <h1>Why not Schema::Versioned?</h1>
       <ul class="incremental">
          <li>Not a component on Schema &there4; DBIx::Class::Journal</li>
          <li>Much more extensible</li>
@@ -95,7 +95,7 @@
 
    <div class="slide">
    <h1>YUCK.</h1>
-<pre style="font-size:35%;">sub _set_db_version {
+<pre style="font-size:45%;">sub _set_db_version {
   my $self = shift;
   my ($params) = @_;
   $params ||= {};
@@ -178,13 +178,13 @@
       <h1>SQLTDM - Perl Scripts</h1>
       <ul class="incremental">
          <li>similar to .psgi - anonymous coderef</li>
-         <li>First arg is the schema (except for preinstall and _protoschema)</li>
+         <li>First arg is the schema (except for initialize and _preprocess_schema)</li>
       </ul>
       <div class="notes">
          <p>A Perl script used by SQLTDM is actually very similar to a .psgi
          script.  It should just be an anonymous subref.  Scripts for install,
          upgrade, and downgrade get the schema as their first argument.
-         The preinstall scripts are not passed any arguments.</p>
+         The initialize scripts are not passed any arguments.</p>
       </div>
    </div>
 
@@ -197,36 +197,33 @@
 
    <div class="slide">
       <h1>SQLTDM - Directory Layout</h1>
-      <p>Note: this is heavily based upon DBIx::Migration::Directories</p>
-<pre style="font-size:35%;">$sql_migration_dir
- |- _protoschema
- |  |- schema
- |  |  `- 1
- |  |     `- 001-auto.yml
- |  `- up
- |     `- 1-2
- |        `- rename_columns.pl
+      <p>Note: this is inspired by DBIx::Migration::Directories</p>
+<pre style="font-size:45%;">$sql_migration_dir
+ |- _source
+ |  `- deploy
+ |     `- 1
+ |        `- 001-auto.yml
  |- SQLite
- |  |- down
+ |  |- downgrade
  |  |  `- 2-1
  |  |     `- 001-auto.sql
- |  |- preinstall
+ |  |- initialize
  |  |  `- 1
  |  |     |- 001-create_database.pl
  |  |     `- 002-create_users_and_permissions.pl
- |  |- schema
+ |  |- deploy
  |  |  `- 1
  |  |     `- 001-auto.sql
- |  `- up
+ |  `- upgrade
  |     |- 1-2
  |     |  `- 001-auto.sql
  |     `- 2-3
  |        `- 001-auto.sql
  |- _common
-    |- down
+    |- downgrade
     |  `- 2-1
     |     `- 002-remove-customers.pl
-    `- up
+    `- upgrade
        `- 1-2
           `- 002-generate-customers.pl
    </div>
@@ -234,7 +231,7 @@
    <div class="slide">
       <h1>Standard Version Storage</h1>
       <ul>
-         <li>autoinc instead of monster date</li>
+         <li>autoinc instead of ridiculo-date</li>
       </ul>
       <div class="notes">
          <p>Not a whole lot worth saying here.  The main change from
@@ -252,33 +249,34 @@
    </div>
 
    <div class="slide">
-      <h1>preinstall</h1>
+      <h1>initialize</h1>
       <ul class="incremental">
          <li>Optional, but recommended by the frewmbot</li>
          <li>CREATE DATABASE</li>
          <li>only Perl</li>
       </ul>
       <div class="notes">
-         <p>The preinstall stage, while not required, should vastly reduce the
+         <p>The initialize stage, while not required, should vastly reduce the
          amount of manual intervention required for a deploy.  Typical usage
          will probably be something like having it do CREATE DATABASE FOO
          as well as adding a few users to the database and whatnot.</p>
-         <p>Because preinstall is such an open-ended stage, it currently
+         <p>Because initialize is such an open-ended stage, it currently
          only supports running perl scripts, instead of perl and sql like
          the rest of the stages.</p>
       </div>
    </div>
 
    <div class="slide">
-      <h1>preinstall example</h1>
-<pre># $migrations/MySQL/preinstall/1/001_create_database.pl
+      <h1>initialize example</h1>
+<pre># $migrations/MySQL/initialize/1/001_create_database.pl
 sub {
    use DBI;
    my $user     = 'root'; # you should probably
    my $password = 'foo';  # prompt the user for
    my $dsn      = 'bar';  # at least the password
    my $dbh      = DBI-&gt;connect($dsn, $user, $password);
-   $dbh-&gt;do('CREATE DATABASE frewmbot') or die 'Shucks howdy!  FAIL:' . $@;
+   $dbh-&gt;do('CREATE DATABASE frewmbot')
+      or die 'Shucks howdy!  FAIL:' . $@;
 };
 </pre>
    </div>
@@ -303,8 +301,9 @@ sub {
 <pre># $migrations/_common/install/1/001_create_users.pl
 sub {
    my $schema = shift;
-   my @useless = $schema-&gt;resultset('User')-&gt;populate([
-      {username =&gt; 'frew', password =&gt; 'test' },
+   $schema-&gt;resultset('User')-&gt;populate([
+      [qw( username password )],
+      [qw( frew     test     )],
    ]);
 };
 </pre>
@@ -339,7 +338,7 @@ sub {
    </div>
 
    <div class="slide">
-      <h1>The fabled _protoschema</h1>
+      <h1>_source and _preprocess_schema</h1>
       <ul class="incremental">
          <li>Look ma!  No SQL!</li>
          <li>No obnoxious renamed_from's in you DBIC::Schema</li>
@@ -356,13 +355,18 @@ sub {
 
    <div class="slide">
       <h1>Quick rant about implementation</h1>
-      <p>Parameterized Roles &#8867; MI like Delegation</p>
-      <p>Should probably use something more proven at some point, but right
-      now my half baked solution works great.</p>
+      <ul class="incremental">
+         <li>Parameterized Roles &#8867; MI like Delegation</li>
+         <li>Should probably use something more proven at some point, but right
+         now my half baked solution works great.</li>
+      </ul>
    </div>
 
    <div class="slide">
       <h1>Customization</h1>
+      <ul class="incremental">
+         <li>Already lots of override points if that will be easier thanks to DBICDH::Deprecated</li>
+      </ul>
    </div>
 
    <div class="slide">
@@ -378,7 +382,8 @@ sub {
 <pre>
 package MyApp::Schema::DBICDHStorage;
 use Moose;
-extends 'DBIx::Class::DeploymentHandler::VersionStorage::Standard';
+extends
+   'DBIx::Class::DeploymentHandler::VersionStorage::Standard';
 
 sub _build_version_rs {
   $_[0]-&gt;schema-&gt;register_class(
@@ -405,7 +410,8 @@ __PACKAGE__-&gt;meta-&gt;make_immutable;
       <h1>DBIC Result</h1>
 <pre>
 package MyApp::Schema::DBICDHStorageResult;
-use parent 'DBIx::Class::DeploymentHandler::VersionStorage::Standard::VersionResult';
+use parent
+   'DBIx::Class::DeploymentHandler::VersionStorage::Standard::VersionResult';
 __PACKAGE__-&gt;table('fl_bench_journal_versions');
 1;
 </pre>
@@ -420,14 +426,15 @@ __PACKAGE__-&gt;table('fl_bench_journal_versions');
 
    <div class="slide">
       <h1>Custom DBICDH</h1>
-<pre>
+<pre style="font-size:68%;">
 package MyApp::Schema::DeploymentHandler;
 use Moose;
 extends 'DBIx::Class::DeploymentHandler::Dad';
 
 with 'DBIx::Class::DeploymentHandler::WithApplicatorDumple' =&gt; {
     interface_role       =&gt; 'DBIx::Class::DeploymentHandler::HandlesDeploy',
-    class_name           =&gt; 'DBIx::Class::DeploymentHandler::DeployMethod::SQL::Translator',
+    class_name           =&gt;
+       'DBIx::Class::DeploymentHandler::DeployMethod::SQL::Translator',
     delegate_name        =&gt; 'deploy_method',
     attributes_to_assume =&gt; ['schema'],
     attributes_to_copy   =&gt; [qw( databases script_directory sql_translator_args )],
@@ -444,21 +451,23 @@ with 'DBIx::Class::DeploymentHandler::WithApplicatorDumple' =&gt; {
     delegate_name        =&gt; 'version_storage',
     attributes_to_assume =&gt; ['schema'],
   };
+</pre>
+  </div>
+
+   <div class="slide">
+      <h1>Custom DBICDH (2)</h1>
+<pre style="font-size:68%;">
 with 'DBIx::Class::DeploymentHandler::WithReasonableDefaults';
 
 sub prepare_version_storage_install {
-  my $self = shift;
-
-  $self-&gt;prepare_resultsource_install(
-    $self-&gt;version_storage-&gt;version_rs-&gt;result_source
+  $_[0]-&gt;prepare_resultsource_install(
+    $_[0]-&gt;version_storage-&gt;version_rs-&gt;result_source
   );
 }
 
 sub install_version_storage {
-  my $self = shift;
-
-  $self-&gt;install_resultsource(
-    $self-&gt;version_storage-&gt;version_rs-&gt;result_source
+  $_[0]-&gt;install_resultsource(
+    $_[0]-&gt;version_storage-&gt;version_rs-&gt;result_source
   );
 }
 
@@ -475,12 +484,38 @@ __PACKAGE__-&gt;meta-&gt;make_immutable;
 
    <div class="slide">
       <h1>VersionHandler</h1>
-      <p>Git style non-linear upgrades</p>
+      <ul class="incremental">
+         <li>Git style non-linear upgrades</li>
+         <li>QC can inspect and approve different database migrations in various orders</li>
    </div>
 
    <div class="slide">
-      <h1>DeployMethod</h1>
-      <p>No intermediate SQL</p>
+      <h1>VersionHandler: branches</h1>
+      <ul>
+         <li>User Auth<ul>
+            <li>Friends</li>
+            <li>Enemies</li>
+         </ul></li>
+         <li>Parths Management</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>VersionHandler: git handwaving</h1>
+      <ul class="incremental">
+         <li>git can be used to see what depends on what</li>
+         <li>Suppose we already have a module that makes that part easy</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>VersionHandler: how it might work</h1>
+      <ul class="incremental">
+         <li>QC requests to install Enemies</li>
+         <li>Overridden VersionHandler queries git and sees that we need to install Auth first</li>
+         <li>VersionHandler tells us to install Auth and then Enemies</li>
+      </ul>
+   </div>
 
    <div class="slide">
       <h1>Questions?</h1>
