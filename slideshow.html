@@ -88,6 +88,7 @@
       <h1>Why not Schema::Versioned?</h1>
       <ul class="incremental">
          <li>Not a component on Schema &there4; DBIx::Class::Journal</li>
+         <li>Optional Component for version warnings</li>
          <li>Much more extensible</li>
          <li>A clean break from backcompat</li>
       </ul>
@@ -133,6 +134,42 @@
    </div>
 
    <div class="slide">
+      <h1>DBICDH is a Transformer</h1>
+      <ul class="incremental">
+         <li>DBICDH is built from 3 smaller robots</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>VersionHandler</h1>
+      <ul class="incremental">
+         <li>See <a href="http://search.cpan.org/perldoc?DBIx::Class::DeploymentHandler::HandlesVersioning">doc</a></li>
+         <li>Basically an iterator of "versions" from current version to desired version</li>
+         <li>Goes up and down to error check if you accidentally downgrade</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>VersionStorage</h1>
+      <ul class="incremental">
+         <li>See <a href="http://search.cpan.org/perldoc?DBIx::Class::DeploymentHandler::HandlesVersionStorage">doc</a></li>
+         <li>Where the current (and previous) versions of the database get (surprise!) stored</li>
+         <li>Bundled storages are just tables in the database</li>
+         <li>This is the easiest and most sensible to override</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>DeployMethod</h1>
+      <ul class="incremental">
+         <li>See <a href="http://search.cpan.org/perldoc?DBIx::Class::DeploymentHandler::HandlesDeploy">doc</a></li>
+         <li>Generates DDL</li>
+         <li>Runs SQL</li>
+         <li>and more</li>
+      </ul>
+   </div>
+
+   <div class="slide">
       <h1>Introduction to the defaults</h1>
       <ul class="incremental">
          <li>lots of options</li>
@@ -163,7 +200,7 @@
    <div class="slide">
       <h1>SQL::Translator Deploy Method</h1>
       <ul class="incremental">
-         <li>SQLT for SQL generation</li>
+         <li>SQLT for DDL generation</li>
          <li>Runs scripts</li>
       </ul>
       <div class="notes">
@@ -253,7 +290,9 @@
       <ul class="incremental">
          <li>Optional, but recommended by the frewmbot</li>
          <li>CREATE DATABASE</li>
-         <li>only Perl</li>
+         <li>only Perl<ul class="incremental">
+            <li>Could we even <strong>have</strong> a dbh?</li>
+         </ul></li>
       </ul>
       <div class="notes">
          <p>The initialize stage, while not required, should vastly reduce the
@@ -312,7 +351,7 @@ sub {
    <div class="slide">
       <h1>upgrade</h1>
       <ul class="incremental">
-         <li>run prepare_install + prepare_upgrade first</li>
+         <li>bump schema version + run prepare_install + prepare_upgrade first</li>
          <li>schema modifications</li>
          <li>vanilla additions/deletions should be automatic</li>
          <li>column renames need user scripting</li>
@@ -342,6 +381,8 @@ sub {
       <ul class="incremental">
          <li>Look ma!  No SQL!</li>
          <li>No obnoxious renamed_from's in you DBIC::Schema</li>
+         <li>Don't touch _source</li>
+         <li>_preprocess_schema is simple a coderef that takes the old and new schemata</li>
       </ul>
    </div>
 
@@ -354,9 +395,34 @@ sub {
    </div>
 
    <div class="slide">
-      <h1>Quick rant about implementation</h1>
+      <h1>Implementation Side Trip</h1>
       <ul class="incremental">
-         <li>Parameterized Roles &#8867; MI like Delegation</li>
+         <li>Roles are great!</li>
+         <li>But you can have method name collisions etc</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Delegation</h1>
+      <ul class="incremental">
+         <li>Delegation is great!</li>
+         <li>But it often shows too much implementation and overriding parts is hard</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>DO BOTH</h1>
+      <ul class="incremental">
+         <li>Use Delegation...</li>
+         <li>But have roles that make top level methods to automatically delegate to delegate objects</li>
+         <li>People can override single methods still</li>
+         <li>Or slot in brand new delegates</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <ul class="incremental">
+         <li>Parameterized Roles &#8867; Delegation that looks like MI</li>
          <li>Should probably use something more proven at some point, but right
          now my half baked solution works great.</li>
       </ul>
@@ -375,6 +441,7 @@ sub {
          <li>DBICDH Storage</li>
          <li>DBIC Result</li>
          <li>Custom DBICDH</li>
+      </ul>
    </div>
 
    <div class="slide">
@@ -483,6 +550,14 @@ __PACKAGE__-&gt;meta-&gt;make_immutable;
 </div>
 
    <div class="slide">
+      <h1>VersionStorage: etc</h1>
+      <ul class="incremental">
+         <li>You also might want to change the columns of the table</li>
+         <li>Or even do something like not store on the db</li>
+      </ul>
+   </div>
+
+   <div class="slide">
       <h1>VersionHandler</h1>
       <ul class="incremental">
          <li>Git style non-linear upgrades</li>
@@ -496,7 +571,7 @@ __PACKAGE__-&gt;meta-&gt;make_immutable;
             <li>Friends</li>
             <li>Enemies</li>
          </ul></li>
-         <li>Parths Management</li>
+         <li>Parts Management</li>
       </ul>
    </div>
 
