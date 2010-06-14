@@ -169,6 +169,27 @@
       </ul>
    </div>
 
+<!-- three workflows:
+
+     Small
+         Nathan is the DBA, QA, and the main developer
+         Time is money
+         "ignore_ddl"
+
+     Med
+         Jane is the DBA
+         Harrison does Dev + QA
+         Stan and Mark both do Dev
+         (relatively simple QA)
+         Generate SQL, inspect, verify or change, run
+
+     Large
+         Geoff, Neil, and Jessica are all developers working on separate branches, which contain code and db changes
+         Interface with git to allow parallel dev
+         Interface with DBIC::Fixtures to shrink live db for testing, local dev, etc
+
+     -->
+
    <div class="slide">
       <h1>Introduction to the defaults</h1>
       <ul class="incremental">
@@ -421,8 +442,8 @@ sub {
    </div>
 
    <div class="slide">
+      <h1>Implementation Side Trip Over</h1>
       <ul class="incremental">
-         <li>Parameterized Roles &#8867; Delegation that looks like MI</li>
          <li>Should probably use something more proven at some point, but right
          now my half baked solution works great.</li>
       </ul>
@@ -431,7 +452,7 @@ sub {
    <div class="slide">
       <h1>Customization</h1>
       <ul class="incremental">
-         <li>Already lots of override points if that will be easier thanks to DBICDH::Deprecated</li>
+         <li>Already lots of override points so should be easier (thanks to DBICDH::Deprecated)</li>
       </ul>
    </div>
 
