@@ -169,27 +169,6 @@
       </ul>
    </div>
 
-<!-- three workflows:
-
-     Small
-         Nathan is the DBA, QA, and the main developer
-         Time is money
-         "ignore_ddl"
-
-     Med
-         Jane is the DBA
-         Harrison does Dev + QA
-         Stan and Mark both do Dev
-         (relatively simple QA)
-         Generate SQL, inspect, verify or change, run
-
-     Large
-         Geoff, Neil, and Jessica are all developers working on separate branches, which contain code and db changes
-         Interface with git to allow parallel dev
-         Interface with DBIC::Fixtures to shrink live db for testing, local dev, etc
-
-     -->
-
    <div class="slide">
       <h1>Introduction to the defaults</h1>
       <ul class="incremental">
@@ -404,6 +383,184 @@ sub {
          <li>No obnoxious renamed_from's in you DBIC::Schema</li>
          <li>Don't touch _source</li>
          <li>_preprocess_schema is simple a coderef that takes the old and new schemata</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Workflows catered to team size</h1>
+      <ul class="incremental">
+         <li>Different teams must work differently</li>
+         <li>Cannot give examples for every team</li>
+         <li>But will make a few major size based examples<ul class="incremental">
+            <li>Small (1-3 devs)</li>
+            <li>Medium (4-12 devs)</li>
+            <li>Large (&gt; 12 devs)</li>
+         </ul></li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Small Team - People</h1>
+
+      <ul class="incremental">
+         <li>Team of 1-3</li>
+         <li>Nathan is a Software Developer/Manager/DBA</li>
+         <li>He wears a lot of hats</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Small Team - Goals</h1>
+
+      <ul class="incremental">
+         <li>Nathan's main goals are to deliver<ul class="incremental">
+            <li>software on time/under budget</li>
+            <li>software that meets the requirements originally specified</li>
+         </ul></li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Small Team - How DBICDH can help</h1>
+
+      <ul class="incremental">
+         <li>Minimizing the amount of tools to learn<ul class="incremental">
+            <li>Minimize need to learn your weird flavor of DDL</li>
+            <li>No need to learn your RDBMS' GUI tool</li>
+            <li>Just use DBICDH, save time</li>
+         </ul></li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Small Team - How DBICDH can help (2)</h1>
+
+      <ul class="incremental">
+         <li>Minimize interaction with DBICDH<ul class="incremental">
+            <li>Set the "ignore_ddl" attribute for your $dh's instantiation</li>
+            <li>Set "databases" attribute to []</li>
+            <li>No SQL (except what you choose to write) to interact with</li>
+         </ul></li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Medium Team - People</h1>
+
+      <ul class="incremental">
+         <li>Team of 4-12</li>
+         <li>Jeff (and others) are Software Engineers</li>
+         <li>Anne is the lone DBA</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Medium Team - Goals</h1>
+
+      <ul class="incremental">
+         <li>The software developers want to have a good relationship with Anne<ul class="incremental">
+            <li>They want to be able to use their favorite ORM!</li>
+         </ul></li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Medium Team - Goals (2)</h1>
+
+      <ul class="incremental">
+         <li>Anne wants to ensure that the database has<ul class="incremental">
+            <li>Foreign key constraints</li>
+            <li>Unique Constraints</li>
+            <li>Defaults</li>
+            <li>Etc</li>
+         </ul></li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Medium Team - How DBICDH can help</h1>
+
+      <ul class="incremental">
+         <li>The software developers will generally be able to model their data sanely with DBIC naturally, because DBIC<ul class="incremental">
+            <li>Has easy-to-work-with relationships</li>
+            <li>Encourages sane usage of constraints</li>
+         </ul></li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Medium Team - How DBICDH can help (2)</h1>
+
+      <ul class="incremental">
+         <li>Anne's job can be helped by<ul class="incremental">
+            <li>NOT setting the "ignore_ddl" attribute for your $dh's instantiation</li>
+            <li>Setting the "databases" attribute to 'MySQL' (or whatever)</li>
+            <li>And then Anne can audit and modify the generated DDL</li>
+            <li>Furthermore, thanks to the recommended practice of doing upgrades instead of redeploys, Anne can simply audit DDL modifications instead of re-auditing the entire database</li>
+         </ul></li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Large Team - People</h1>
+
+      <ul class="incremental">
+         <li>Team of &gt; 12</li>
+         <li>Lots of developers with lots of different goals (we'll go over a specific example later)</li>
+         <li>Jeff is DBA</li>
+         <li>Catherine is a QA Professional</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Large Team - Goals</h1>
+
+      <ul class="incremental">
+         <li>Software developers mostly need to be able to be isolated<ul class="incremental">
+            <li>Not all team members can know what all the others are working on</li>
+         </ul></li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Large Team - Goals (2)</h1>
+
+      <ul class="incremental">
+         <li>Jeff (DBA) wants to ensure that the same things that a middle sized team's DBA would: database has<ul class="incremental">
+            <li>Foreign key constraints</li>
+            <li>Unique Constraints</li>
+            <li>Defaults</li>
+            <li>Etc</li>
+         </ul></li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Large Team - Goals (3)</h1>
+
+      <ul class="incremental">
+         <li>Catherine (QA) needs to be able to vet each developer's work to allow it to be released </li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Large Team - How DBICDH can help</h1>
+
+      <ol class="incremental">
+         <li>In addition to what's noted before for the medium sized teams, the Software Developers will also be able to take advantage of the flexibility of DBICDH<ul class="incremental">
+            <li>With careful use of customization software developers are able to take advantage of their version control's branching mechanisms...(more)</li>
+         </ul></li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Large Team - How DBICDH can help (2)</h1>
+
+      <ol class="incremental">
+         <li>Jeff (DBA) inspects and updates each developer's DDL, as discussed previously, but his modifications remain in a branch</li>
+         <li>Thanks to some custom VersionHandler's (which we'll discuss later) Catherine (QA) is able to install branched DDL and the other DDL that it depends on</li>
+         <li>More on how that works later</li>
+         <li>After Catherine decides that she's happy with the overall state of the system, she can promote the code <strong>and database changes</strong> to production</li>
       </ul>
    </div>
 
