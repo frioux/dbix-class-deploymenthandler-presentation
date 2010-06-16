@@ -539,14 +539,17 @@ sub {
       <h1>Large Team - Goals (3)</h1>
 
       <ul class="incremental">
-         <li>Catherine (QA) needs to be able to vet each developer's work to allow it to be released </li>
+         <li>Catherine (QA) needs to be able to <ul class="incremental">
+            <li>vet each developer's work to allow it to be released</li>
+            <li>make tests that will work sanely with the team's gigantic database</li>
+         </ul></li>
       </ul>
    </div>
 
    <div class="slide">
       <h1>Large Team - How DBICDH can help</h1>
 
-      <ol class="incremental">
+      <ul class="incremental">
          <li>In addition to what's noted before for the medium sized teams, the Software Developers will also be able to take advantage of the flexibility of DBICDH<ul class="incremental">
             <li>With careful use of customization software developers are able to take advantage of their version control's branching mechanisms...(more)</li>
          </ul></li>
@@ -556,7 +559,26 @@ sub {
    <div class="slide">
       <h1>Large Team - How DBICDH can help (2)</h1>
 
-      <ol class="incremental">
+      <ul class="incremental">
+         <li>Thanks to DBICDH's ability to run custom perl Catherine can take advantage of <a href="http://search.cpan.org/perldoc?DBIx::Class::Fixtures">DBIx::Class::Fixtures</a></li>
+         <li>This allows her to only export a subset of the existing database</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>DBIx::Class::Fixtures - A side trip</h1>
+
+      <ul class="incremental">
+         <li>Define sets for which rows to export (can be id's or even DBIx::Class search conditions)</li>
+         <li>Automatically export related belongs_to's</li>
+         <li>Define rules for how much related data (has_many's) to export for rows</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Large Team - How DBICDH can help (3)</h1>
+
+      <ul class="incremental">
          <li>Jeff (DBA) inspects and updates each developer's DDL, as discussed previously, but his modifications remain in a branch</li>
          <li>Thanks to some custom VersionHandler's (which we'll discuss later) Catherine (QA) is able to install branched DDL and the other DDL that it depends on</li>
          <li>More on how that works later</li>
