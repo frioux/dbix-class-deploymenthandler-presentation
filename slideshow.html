@@ -89,6 +89,8 @@
       <ul class="incremental">
          <li>Not a component on Schema &there4; DBIx::Class::Journal</li>
          <li>Optional Component for version warnings</li>
+         <li>Run more than one SQL script on upgrades</li>
+         <li>Run Perl scripts</li>
          <li>Much more extensible</li>
          <li>A clean break from backcompat</li>
       </ul>
@@ -136,7 +138,11 @@
    <div class="slide">
       <h1>DBICDH is a Transformer</h1>
       <ul class="incremental">
-         <li>DBICDH is built from 3 smaller robots</li>
+         <li>DBICDH is built from 3 smaller robots <ul class="incremental">
+            <li>VersionHandler</li>
+            <li>VersionStorage</li>
+            <li>DeployMethod</li>
+         </ul></li>
       </ul>
    </div>
 
@@ -145,7 +151,7 @@
       <ul class="incremental">
          <li>See <a href="http://search.cpan.org/perldoc?DBIx::Class::DeploymentHandler::HandlesVersioning">doc</a></li>
          <li>Basically an iterator of "versions" from current version to desired version</li>
-         <li>Goes up and down to error check if you accidentally downgrade</li>
+         <li>Distinguishes between up and down to error check if you accidentally downgrade</li>
       </ul>
    </div>
 
@@ -198,7 +204,7 @@
    </div>
 
    <div class="slide">
-      <h1>SQL::Translator Deploy Method</h1>
+      <h1>SQL::Translator DM</h1>
       <ul class="incremental">
          <li>SQLT for DDL generation</li>
          <li>Runs scripts</li>
@@ -226,7 +232,7 @@
    </div>
 
    <div class="slide">
-      <h1>SQLTDM - Serialized Schemata</h1>
+      <h1>SQLTDM - Serialized Schema</h1>
       <ul class="incremental">
          <li>Serialized SQLT objects to represent the schema for any database</li>
       </ul>
@@ -307,12 +313,17 @@
 
    <div class="slide">
       <h1>initialize example</h1>
-<pre># $migrations/MySQL/initialize/1/001_create_database.pl
+<pre># $migrations/MySQL/initialize/1/001_create_db.pl
 sub {
    use DBI;
-   my $user     = 'root'; # you should probably
-   my $password = 'foo';  # prompt the user for
-   my $dsn      = 'bar';  # at least the password
+   my $user     = 'root';
+   my $password = 'foo';
+   my $dsn      = 'bar';
+
+   # you should probably
+   # prompt the user for
+   # at least the password
+
    my $dbh      = DBI-&gt;connect($dsn, $user, $password);
    $dbh-&gt;do('CREATE DATABASE frewmbot')
       or die 'Shucks howdy!  FAIL:' . $@;
@@ -337,7 +348,7 @@ sub {
 
    <div class="slide">
       <h1>install example</h1>
-<pre># $migrations/_common/install/1/001_create_users.pl
+<pre># $migrations/_common/install/1/01_create_usr.pl
 sub {
    my $schema = shift;
    $schema-&gt;resultset('User')-&gt;populate([
@@ -367,17 +378,19 @@ sub {
 
    <div class="slide">
       <h1>upgrade example</h1>
-<pre># $migrations/_common/upgrade/1-2/001_hash_passwords.pl
+<pre># $migrations/_common/upgrade/1-2/01_hash_pass.pl
 sub {
    my $schema = shift;
-   $_-&gt;update({ password =&gt; $_-&gt;get_column('password') })
-      for $schema-&gt;resultset('User')-&gt;all;
+   $_-&gt;update({
+      password =&gt; $_-&gt;get_column('password')
+   }) for $schema-&gt;resultset('User')-&gt;all;
 };
 </pre>
    </div>
 
    <div class="slide">
-      <h1>_source and _preprocess_schema</h1>
+      <h1>_source</h1>
+      <h2>and _preprocess_schema</h2>
       <ul class="incremental">
          <li>Look ma!  No SQL!</li>
          <li>No obnoxious renamed_from's in you DBIC::Schema</li>
@@ -387,7 +400,8 @@ sub {
    </div>
 
    <div class="slide">
-      <h1>Workflows catered to team size</h1>
+      <h1>Workflows</h1>
+      <h2>catered to team size</h2>
       <ul class="incremental">
          <li>Different teams must work differently</li>
          <li>Cannot give examples for every team</li>
@@ -421,7 +435,8 @@ sub {
    </div>
 
    <div class="slide">
-      <h1>Small Team - How DBICDH can help</h1>
+      <h1>Small Team</h1>
+      <h2>How DBICDH can help</h2>
 
       <ul class="incremental">
          <li>Minimizing the amount of tools to learn<ul class="incremental">
@@ -433,7 +448,8 @@ sub {
    </div>
 
    <div class="slide">
-      <h1>Small Team - How DBICDH can help (2)</h1>
+      <h1>Small Team</h1>
+      <h2>How DBICDH can help (2)</h2>
 
       <ul class="incremental">
          <li>Minimize interaction with DBICDH<ul class="incremental">
@@ -478,7 +494,8 @@ sub {
    </div>
 
    <div class="slide">
-      <h1>Medium Team - How DBICDH can help</h1>
+      <h1>Medium Team</h1>
+      <h2>How DBICDH can help</h2>
 
       <ul class="incremental">
          <li>The software developers will generally be able to model their data sanely with DBIC naturally, because DBIC<ul class="incremental">
@@ -489,7 +506,8 @@ sub {
    </div>
 
    <div class="slide">
-      <h1>Medium Team - How DBICDH can help (2)</h1>
+      <h1>Medium Team</h1>
+      <h2>How DBICDH can help (2)</h2>
 
       <ul class="incremental">
          <li>Anne's job can be helped by<ul class="incremental">
@@ -547,7 +565,8 @@ sub {
    </div>
 
    <div class="slide">
-      <h1>Large Team - How DBICDH can help</h1>
+      <h1>Large Team</h1>
+      <h2>How DBICDH can help</h2>
 
       <ul class="incremental">
          <li>In addition to what's noted before for the medium sized teams, the Software Developers will also be able to take advantage of the flexibility of DBICDH<ul class="incremental">
@@ -557,7 +576,8 @@ sub {
    </div>
 
    <div class="slide">
-      <h1>Large Team - How DBICDH can help (2)</h1>
+      <h1>Large Team</h1>
+      <h2>How DBICDH can help (2)</h2>
 
       <ul class="incremental">
          <li>Thanks to DBICDH's ability to run custom perl Catherine can take advantage of <a href="http://search.cpan.org/perldoc?DBIx::Class::Fixtures">DBIx::Class::Fixtures</a></li>
@@ -566,7 +586,8 @@ sub {
    </div>
 
    <div class="slide">
-      <h1>DBIx::Class::Fixtures - A side trip</h1>
+      <h1>DBIx::Class::Fixtures</h1>
+      <h2>A side trip</h2>
 
       <ul class="incremental">
          <li>Define sets for which rows to export (can be id's or even DBIx::Class search conditions)</li>
@@ -576,7 +597,8 @@ sub {
    </div>
 
    <div class="slide">
-      <h1>Large Team - How DBICDH can help (3)</h1>
+      <h1>Large Team</h1>
+      <h2>How DBICDH can help (3)</h2>
 
       <ul class="incremental">
          <li>Jeff (DBA) inspects and updates each developer's DDL, as discussed previously, but his modifications remain in a branch</li>
@@ -621,7 +643,8 @@ sub {
    </div>
 
    <div class="slide">
-      <h1>Implementation Side Trip Over</h1>
+      <h1>Implementation Side Trip</h1>
+      <h2>END</h2>
       <ul class="incremental">
          <li>Should probably use something more proven at some point, but right
          now my half baked solution works great.</li>
@@ -636,7 +659,8 @@ sub {
    </div>
 
    <div class="slide">
-      <h1>VersionStorage: Changing table name</h1>
+      <h1>VersionStorage</h1>
+      <h2>Changing table name</h2>
       <ul class="incremental">
          <li>DBICDH Storage</li>
          <li>DBIC Result</li>
@@ -650,7 +674,8 @@ sub {
 package MyApp::Schema::DBICDHStorage;
 use Moose;
 extends
-   'DBIx::Class::DeploymentHandler::VersionStorage::Standard';
+   'DBIx::Class::DeploymentHandler' .
+   '::VersionStorage::Standard';
 
 sub _build_version_rs {
   $_[0]-&gt;schema-&gt;register_class(
@@ -678,7 +703,8 @@ __PACKAGE__-&gt;meta-&gt;make_immutable;
 <pre>
 package MyApp::Schema::DBICDHStorageResult;
 use parent
-   'DBIx::Class::DeploymentHandler::VersionStorage::Standard::VersionResult';
+   'DBIx::Class::DeploymentHandler' .
+   '::VersionStorage::Standard::VersionResult';
 __PACKAGE__-&gt;table('fl_bench_journal_versions');
 1;
 </pre>
@@ -776,7 +802,8 @@ __PACKAGE__-&gt;meta-&gt;make_immutable;
    </div>
 
    <div class="slide">
-      <h1>VersionHandler: git handwaving</h1>
+      <h1>VersionHandler</h1>
+      <h2>git handwaving</h2>
       <ul class="incremental">
          <li>git can be used to see what depends on what</li>
          <li>Suppose we already have a module that makes that part easy</li>
@@ -784,7 +811,8 @@ __PACKAGE__-&gt;meta-&gt;make_immutable;
    </div>
 
    <div class="slide">
-      <h1>VersionHandler: how it might work</h1>
+      <h1>VersionHandler</h1>
+      <h2>how it might work</h2>
       <ul class="incremental">
          <li>QC requests to install Enemies</li>
          <li>Overridden VersionHandler queries git and sees that we need to install Auth first</li>
